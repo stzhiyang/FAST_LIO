@@ -1,0 +1,14 @@
+<launch>
+    <arg name="bag" default="$(find fast_lio)/../datasets/hku_campus_seq_00.bag"/>
+    <arg name="rate" default="1.0"/>
+    <arg name="start" default="0.0"/>
+    <arg name="delay" default="3.0"/>
+    <arg name="duration" default="0.0" doc="0 plays the full bag; otherwise seconds of bag time"/>
+    <arg name="duration_args" default="$(eval '--duration=' + str(arg('duration')) if float(arg('duration')) &gt; 0 else '')"/>
+    <arg name="use_sim_time" default="true"/>
+    <param name="use_sim_time" value="$(arg use_sim_time)"/>
+    <node pkg="rosbag" type="play" name="rosbag_play" output="screen"
+          args="--clock --keep-alive -r $(arg rate) -s $(arg start) -d $(arg delay)
+                $(arg duration_args)
+                --bags &quot;$(arg bag)&quot;"/>
+</launch>

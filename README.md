@@ -1,3 +1,16 @@
+## 高频里程计扩展（已实现）
+
+在激光帧更新之间，使用 IMU 中值积分传播位姿和速度，补偿偏置与重力；激光校正后同步前端状态并重传播缓存 IMU。新增 `/Odometry_highrate`，每处理一条新 IMU 发布一次，原 `/Odometry` 保持激光帧更新频率。
+
+AVIA、MID360 与 HKU Campus 启动配置默认开启，可通过 `highrate_odom:=false` 关闭。例如：
+
+```bash
+roslaunch fast_lio mapping_hku_campus.launch
+rostopic hz /Odometry_highrate
+```
+
+更多运行说明见[总仓库 README](../README.md)。
+
 ## Related Works and Extended Application
 
 **SLAM:**

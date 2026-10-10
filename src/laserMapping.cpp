@@ -44,6 +44,7 @@
 #include <ros/ros.h>
 #include <Eigen/Core>
 #include "IMU_Processing.hpp"
+#include "imu_odometry.hpp"
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 #include <visualization_msgs/Marker.h>
@@ -139,6 +140,23 @@ geometry_msgs::PoseStamped msg_body_pose;
 
 shared_ptr<Preprocess> p_pre(new Preprocess());
 shared_ptr<ImuProcess> p_imu(new ImuProcess());
+
+bool highrate_odom_en = false;
+ros::Publisher pubOdomHighRate;
+ImuOdometry imu_odometry;
+
+void update_highrate_odometry()
+{
+    if (!highrate_odom_en) return;
+    ImuOdometry::State corrected;
+    corrected.position = state_point.pos;
+    corrected.rotation = Eigen::Quaterniond(state_point.rot.toRotationMatrix());
+    corrected.velocity = state_point.vel;
+    corrected.bias_acc = state_point.ba;
+    corrected.bias_gyr = state_point.bg;
+    corrected.gravity = V3D(state_point.grav[0], state_point.grav[1], state_point.grav[2]);
+    imu_odometry.correct(lidar_end_time, corrected, p_imu->acceleration_scale());
+}
 
 void SigHandle(int sig)
 {
@@ -354,6 +372,7 @@ void imu_cbk(const sensor_msgs::Imu::ConstPtr &msg_in)
     {
         ROS_WARN("imu loop back, clear buffer");
         imu_buffer.clear();
+        imu_odometry.reset();
     }
 
     last_timestamp_imu = timestamp;
@@ -361,6 +380,10 @@ void imu_cbk(const sensor_msgs::Imu::ConstPtr &msg_in)
     imu_buffer.push_back(msg);
     mtx_buffer.unlock();
     sig_buffer.notify_all();
+    if (highrate_odom_en && imu_odometry.addImu(*msg))
+    {
+        pubOdomHighRate.publish(imu_odometry.odometry());
+    }
 }
 
 double lidar_mean_scantime = 0.0;
@@ -759,6 +782,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     nh.param<bool>("publish/path_en",path_en, true);
+    nh.param<bool>("publish/highrate_odom_en", highrate_odom_en, false);
     nh.param<bool>("publish/scan_publish_en",scan_pub_en, true);
     nh.param<bool>("publish/dense_publish_en",dense_pub_en, true);
     nh.param<bool>("publish/scan_bodyframe_pub_en",scan_body_pub_en, true);
@@ -858,6 +882,11 @@ int main(int argc, char** argv)
             ("/Odometry", 100000);
     ros::Publisher pubPath          = nh.advertise<nav_msgs::Path> 
             ("/path", 100000);
+    if (highrate_odom_en)
+    {
+        pubOdomHighRate = nh.advertise<nav_msgs::Odometry>("/Odometry_highrate", 1000);
+        ROS_INFO("IMU-rate odometry enabled: /Odometry_highrate");
+    }
 //------------------------------------------------------------------------------------------------------
     signal(SIGINT, SigHandle);
     ros::Rate rate(5000);
@@ -967,6 +996,8 @@ int main(int argc, char** argv)
             geoQuat.w = state_point.rot.coeffs()[3];
 
             double t_update_end = omp_get_wtime();
+
+            update_highrate_odometry();
 
             /******* Publish odometry *******/
             publish_odometry(pubOdomAftMapped);
