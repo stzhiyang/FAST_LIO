@@ -1,0 +1,49 @@
+# MulRan Riverside02: Ouster OS1-64 and XSENS IMU.
+# PointCloud2.t is an estimated scan-start offset in nanoseconds.
+common:
+  lid_topic: /os1_points
+  imu_topic: /imu/data_raw
+  time_sync_en: false
+  time_offset_lidar_to_imu: 0.0
+
+preprocess:
+  lidar_type: 3
+  scan_line: 64
+  scan_rate: 10
+  timestamp_unit: 3
+  blind: 4.0
+
+mapping:
+  acc_cov: 0.1
+  gyr_cov: 0.1
+  b_acc_cov: 0.0001
+  b_gyr_cov: 0.0001
+  fov_degree: 180.0
+  det_range: 150.0
+  extrinsic_est_en: false
+  # Initial MulRan calibration: p_imu = R * p_lidar + T.
+  # These values match the existing local ouster64_mulran configuration;
+  # they have not been recalibrated or validated on Riverside02.
+  extrinsic_T: [1.77, 0.0, -0.05]
+  extrinsic_R: [-1, 0, 0,
+                 0, -1, 0,
+                 0, 0, 1]
+
+publish:
+  path_en: true
+  highrate_odom_en: true
+  scan_publish_en: true
+  dense_publish_en: true
+  scan_bodyframe_pub_en: true
+
+pcd_save:
+  pcd_save_en: false
+  interval: -1
+
+feature_extract_enable: false
+point_filter_num: 3
+max_iteration: 3
+filter_size_surf: 0.5
+filter_size_map: 0.5
+cube_side_length: 1000.0
+runtime_pos_log_enable: false

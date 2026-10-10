@@ -1,0 +1,21 @@
+<launch>
+  <!-- Data input only. Never starts mapping or the loop backend. -->
+  <arg name="dataset" default="/home/st/aics/datasets/loop_dataset/Riverside02"/>
+  <arg name="rate" default="1.0"/>
+  <arg name="start" default="0.0"/>
+  <arg name="duration" default="0.0"/>
+  <arg name="delay" default="2.0"/>
+  <!-- Assumed CSV scan reference; change only after confirming the convention. -->
+  <arg name="stamp_reference" default="start"/>
+  <arg name="scan_period" default="0.1"/>
+  <param name="use_sim_time" value="true"/>
+  <node pkg="fast_lio" type="play_riverside02.py" name="riverside02_player" output="screen">
+    <param name="dataset" value="$(arg dataset)"/>
+    <param name="rate" value="$(arg rate)"/>
+    <param name="start" value="$(arg start)"/>
+    <param name="duration" value="$(arg duration)"/>
+    <param name="delay" value="$(arg delay)"/>
+    <param name="stamp_reference" value="$(arg stamp_reference)"/>
+    <param name="scan_period" value="$(arg scan_period)"/>
+  </node>
+</launch>

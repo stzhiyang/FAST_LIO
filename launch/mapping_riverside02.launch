@@ -1,0 +1,13 @@
+<launch>
+  <!-- Frontend and its original RViz. Start the backend and data input separately. -->
+  <arg name="config" default="$(find fast_lio)/config/riverside02.yaml"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="highrate_odom" default="true"/>
+  <arg name="rviz" default="true"/>
+  <param name="use_sim_time" value="$(arg use_sim_time)"/>
+  <rosparam command="load" file="$(arg config)"/>
+  <param name="publish/highrate_odom_en" value="$(arg highrate_odom)"/>
+  <node pkg="fast_lio" type="fastlio_mapping" name="laserMapping" output="screen"/>
+  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="fastlio_rviz"
+        args="-d $(find fast_lio)/rviz_cfg/loam_livox.rviz"/>
+</launch>
